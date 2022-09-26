@@ -1,0 +1,240 @@
+Fetch data from api into recyclerview
+
+1)  we have to be created  modelclass acording to apidata
+
+
+public class ModelClass {
+
+    String userId,id,title, body;
+
+    public ModelClass(String userId, String id, String title, String body) {
+        this.userId = userId;
+        this.id = id;
+        this.title = title;
+        this.body = body;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getBody() {
+        return body;
+    }
+
+    public void setBody(String body) {
+        this.body = body;
+    }
+}
+
+2) we have to be create sigle_row xml
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_width="match_parent"
+    android:background="#DA9E9E"
+             android:layout_height="230dp"
+    android:layout_marginBottom="5dp"
+    android:layout_marginTop="5dp">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="demo userid"
+        android:id="@+id/text1"
+        android:background="#E8B0B0"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:padding="10dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="demo id"
+        android:id="@+id/textid"
+        android:background="#E8B0B0"
+        android:textSize="20sp"
+        android:layout_below="@id/text1"
+        android:textStyle="bold"
+        android:padding="10dp"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="demo title"
+        android:id="@+id/texttittle"
+        android:background="#E8B0B0"
+        android:layout_below="@+id/textid"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:padding="10dp"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="demo body"
+        android:id="@+id/textbody"
+        android:background="#E8B0B0"
+        android:layout_below="@id/texttittle"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:padding="10dp"/>
+
+</RelativeLayout>
+
+
+
+3) we have to be created interface here
+
+
+public interface ApiSet {
+
+  @GET("posts")
+   Call<ArrayList<ModelClass>>listmode();
+
+}
+
+4) we have to be created Controler class 
+
+public class Controler {
+
+    public static Controler controler;
+     private static Retrofit retrofit;
+    private static final String base_url= "https://jsonplaceholder.typicode.com/";
+
+    public Controler() {
+
+        retrofit = new Retrofit.Builder()
+                .baseUrl(base_url)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+    }
+    public static synchronized Controler getInstance(){
+        if (controler == null)
+    controler = new Controler();
+        return controler;
+
+    }
+    ApiSet api2(){
+
+        return retrofit.create(ApiSet.class);
+    }
+}
+5) create Adapter class here
+
+
+public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
+
+   ArrayList<ModelClass>dataholder;
+
+    public MyAdapter(ArrayList<ModelClass> dataholder) {
+        this.dataholder = dataholder;
+    }
+
+    @NonNull
+    @Override
+    public ViewHolder onCreateViewHolder(@NonNull  ViewGroup parent, int viewType) {
+
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.row_desgine,parent,false);
+
+        return new ViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull  MyAdapter.ViewHolder holder, int position) {
+
+        holder.text1.setText(dataholder.get(position).getUserId());
+       holder.textid.setText(dataholder.get(position).getId());
+        holder.texttittle.setText(dataholder.get(position).getTitle());
+        holder.textbody.setText(dataholder.get(position).getBody());
+
+
+    }
+
+    @Override
+    public int getItemCount() {
+        return dataholder.size();
+    }
+
+    public class ViewHolder extends RecyclerView.ViewHolder{
+        TextView text1,textid,texttittle,textbody;
+
+
+        public ViewHolder(@NonNull  View itemView) {
+            super(itemView);
+            text1= itemView.findViewById(R.id.text1);
+            textid= itemView.findViewById(R.id.textid);
+            texttittle= itemView.findViewById(R.id.texttittle);
+            textbody= itemView.findViewById(R.id.textbody);
+
+        }
+    }
+}
+
+
+
+
+6)  mainActivity
+
+
+public class MainActivity extends AppCompatActivity {
+
+    RecyclerView recyclerview;
+    MyAdapter adapter;
+//    Button btnsubmid;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        recyclerview = findViewById(R.id.recyclerview);
+        recyclerview.setLayoutManager(new LinearLayoutManager(this));
+//        btnsubmid = findViewById(R.id.btnsubmid);
+
+processdata();
+
+    }
+
+    private void processdata()
+    {
+        Call<ArrayList<ModelClass>>call = Controler.getInstance()
+                .api2().listmode();
+
+        call.enqueue(new Callback<ArrayList<ModelClass>>() {
+            @Override
+            public void onResponse(Call<ArrayList<ModelClass>> call, Response<ArrayList<ModelClass>> response) {
+                ArrayList<ModelClass> data=response.body();
+               adapter = new MyAdapter(data);
+                recyclerview.setAdapter(adapter);
+            }
+
+            @Override
+            public void onFailure(Call<ArrayList<ModelClass>> call, Throwable t) {
+                Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+    }
+
+
+
+
+
